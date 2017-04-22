@@ -12,6 +12,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 
+import com.afollestad.materialdialogs.MaterialDialog;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -49,6 +50,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     private LatLng prevLatLng;
 
+    private MaterialDialog materialDialog;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -61,6 +64,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
 
+        materialDialog = new MaterialDialog.Builder(context)
+                .title(R.string.iss_dialog_title)
+                .content(R.string.iss_dialog_body)
+                .progress(true, 0)
+                .show();
     }
 
     @Override
@@ -82,6 +90,15 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
             @Override
             public void onISSPositionReceived(ISS iss) {
+                if (materialDialog.isShowing()) {
+                    runOnUiThread(new TimerTask() {
+                        @Override
+                        public void run() {
+                            materialDialog.dismiss();
+                        }
+                    });
+                }
+
                 setISSPosition(iss);
             }
         }).execute();
@@ -107,13 +124,13 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                         .add(prevLatLng, latLng)
                         .width(5)
                         .color(ContextCompat.getColor(context, R.color.colorAccent)));
+
+                googleMap.moveCamera(CameraUpdateFactory.newCameraPosition(new CameraPosition.Builder().target(latLng).build()));
+            } else {
+                googleMap.animateCamera(CameraUpdateFactory.newCameraPosition(new CameraPosition.Builder().target(latLng).build()));
             }
 
             prevLatLng = latLng;
-
-            googleMap.animateCamera(CameraUpdateFactory.newCameraPosition(new CameraPosition.Builder().target(latLng).build()));
-
-
         }
 
         ISSTimer = new Timer();
