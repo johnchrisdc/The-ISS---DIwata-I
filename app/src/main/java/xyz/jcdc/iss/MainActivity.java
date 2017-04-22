@@ -32,6 +32,7 @@ import java.text.DecimalFormat;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import xyz.jcdc.iss.model.Diwata;
 import xyz.jcdc.iss.model.ISS;
 import xyz.jcdc.iss.model.ISSPosition;
 
@@ -40,15 +41,19 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private Context context;
 
     private Timer ISSTimer;
+    private Timer DiwataTimer;
 
     private GoogleMap googleMap;
     private Marker marker;
+    private Marker marker_diwata;
 
     private ISSPosition issPosition;
 
     private BitmapDescriptor issIcon;
+    private BitmapDescriptor diwataIcon;
 
     private LatLng prevLatLng;
+    private LatLng prevLatLng_diwata;
 
     private MaterialDialog materialDialog;
 
@@ -77,8 +82,60 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         googleMap.setMapStyle(MapStyleOptions.loadRawResourceStyle(
                 this, R.raw.lunar_landscape));
         issIcon = BitmapDescriptorFactory.fromResource(R.mipmap.ic_iss);
+        diwataIcon = BitmapDescriptorFactory.fromResource(R.mipmap.ic_diwata);
 
         getIssPosition();
+        getDiwataPosition();
+    }
+
+    private void getDiwataPosition() {
+        new GetDiwata(new Diwata.DiwataPositionListener() {
+            @Override
+            public void onStartTracking() {
+
+            }
+
+            @Override
+            public void onDiwataPositionReceived(Diwata diwata) {
+                setDiwataPosition(diwata);
+            }
+        }).execute();
+    }
+
+    private void setDiwataPosition(final Diwata diwata) {
+        if (googleMap != null) {
+            if (marker_diwata != null)
+                marker_diwata.remove();
+
+            LatLng latLng = new LatLng(diwata.getGeometry().getCoordinates().get(0), diwata.getGeometry().getCoordinates().get(1));
+
+            marker_diwata = googleMap.addMarker(new MarkerOptions()
+                    .position(latLng)
+                    .title(latLng.latitude + "," + latLng.longitude)
+                    .icon(diwataIcon)
+                    .anchor(0.5f,0.5f));
+
+            if (prevLatLng_diwata != null) {
+                Polyline line = googleMap.addPolyline(new PolylineOptions()
+                        .add(prevLatLng_diwata, latLng)
+                        .width(5)
+                        .color(ContextCompat.getColor(context, R.color.dilawan)));
+
+            //    googleMap.moveCamera(CameraUpdateFactory.newCameraPosition(new CameraPosition.Builder().target(latLng).build()));
+            } else {
+            //    googleMap.animateCamera(CameraUpdateFactory.newCameraPosition(new CameraPosition.Builder().target(latLng).build()));
+            }
+
+            prevLatLng_diwata = latLng;
+        }
+
+        DiwataTimer = new Timer();
+        DiwataTimer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                getDiwataPosition();
+            }
+        }, 1000);
     }
 
     private void getIssPosition() {
@@ -111,26 +168,29 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 marker.remove();
 
             issPosition = iss.getIssPosition();
-            LatLng latLng = new LatLng(Double.valueOf(issPosition.getLatitude()), Double.valueOf(issPosition.getLongitude()));
 
-            marker = googleMap.addMarker(new MarkerOptions()
-                    .position(latLng)
-                    .title(latLng.latitude + "," + latLng.longitude)
-                    .icon(issIcon)
-                    .anchor(0.5f,0.5f));
+            if (issPosition != null) {
+                LatLng latLng = new LatLng(Double.valueOf(issPosition.getLatitude()), Double.valueOf(issPosition.getLongitude()));
 
-            if (prevLatLng != null) {
-                Polyline line = googleMap.addPolyline(new PolylineOptions()
-                        .add(prevLatLng, latLng)
-                        .width(5)
-                        .color(ContextCompat.getColor(context, R.color.colorAccent)));
+                marker = googleMap.addMarker(new MarkerOptions()
+                        .position(latLng)
+                        .title(latLng.latitude + "," + latLng.longitude)
+                        .icon(issIcon)
+                        .anchor(0.5f,0.5f));
 
-                googleMap.moveCamera(CameraUpdateFactory.newCameraPosition(new CameraPosition.Builder().target(latLng).build()));
-            } else {
-                googleMap.animateCamera(CameraUpdateFactory.newCameraPosition(new CameraPosition.Builder().target(latLng).build()));
+                if (prevLatLng != null) {
+                    Polyline line = googleMap.addPolyline(new PolylineOptions()
+                            .add(prevLatLng, latLng)
+                            .width(5)
+                            .color(ContextCompat.getColor(context, R.color.colorAccent)));
+
+                    //    googleMap.moveCamera(CameraUpdateFactory.newCameraPosition(new CameraPosition.Builder().target(latLng).build()));
+                } else {
+                    //    googleMap.animateCamera(CameraUpdateFactory.newCameraPosition(new CameraPosition.Builder().target(latLng).build()));
+                }
+
+                prevLatLng = latLng;
             }
-
-            prevLatLng = latLng;
         }
 
         ISSTimer = new Timer();

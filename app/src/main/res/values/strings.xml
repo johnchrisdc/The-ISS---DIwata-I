@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">The ISS</string>
+    <string name="app_name">The ISS &amp;&amp; Diwata-I</string>
     <string name="action_settings">Settings</string>
 
     <string name="iss_dialog_title">Loading ISS position</string>
