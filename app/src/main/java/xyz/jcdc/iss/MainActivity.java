@@ -111,13 +111,13 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 marker.remove();
 
             issPosition = iss.getIssPosition();
+            LatLng latLng = new LatLng(Double.valueOf(issPosition.getLatitude()), Double.valueOf(issPosition.getLongitude()));
+
             marker = googleMap.addMarker(new MarkerOptions()
-                    .position(new LatLng(Double.valueOf(issPosition.getLatitude()), Double.valueOf(issPosition.getLongitude())))
-                    .title("ISS")
+                    .position(latLng)
+                    .title(latLng.latitude + "," + latLng.longitude)
                     .icon(issIcon)
                     .anchor(0.5f,0.5f));
-
-            LatLng latLng = new LatLng(Double.valueOf(issPosition.getLatitude()), Double.valueOf(issPosition.getLongitude()));
 
             if (prevLatLng != null) {
                 Polyline line = googleMap.addPolyline(new PolylineOptions()
